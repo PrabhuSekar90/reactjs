@@ -1,0 +1,43 @@
+name: Build and Deploy to Kubernetes
+'on':
+  push:
+    branches:
+      - acam-1703223443334
+env:
+  TAG: ${{ secrets.TAG }}
+  REGISTRY_NAMESPACE: ${{ secrets.REGISTRY_NAMESPACE }}
+  REGISTRY_HOSTNAME: ${{ secrets.REGISTRY }}
+  REGISTRY_USERNAME: ${{secrets.REGISTRY_USERNAME}}
+  REGISTRY_PASSWORD: ${{secrets.REGISTRY_PASSWORD}}
+  KUBERNETES_NAMESPACE: ${{ secrets.KUBERNETES_NAMESPACE }}
+  IMAGE_NAME: ${{ secrets.APP_NAME }}
+  APP_NAME: ${{ secrets.APP_NAME }}
+  APP_PORT: ${{ secrets.APP_PORT }}
+jobs:
+  setup-build-publish-deploy:
+    name: Setup, Build, Publish, and Deploy
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Build with Docker
+        run: >
+          docker build -t
+          ${{env.REGISTRY_HOSTNAME}}/${{env.REGISTRY_NAMESPACE}}/${{env.IMAGE_NAME}}:${{env.TAG}}
+          .
+      - name: Push the image to Container Registry
+        run: >
+          docker login -u ${{env.REGISTRY_USERNAME}} -p
+          ${{env.REGISTRY_PASSWORD}} ${{env.REGISTRY_HOSTNAME}}
+
+          docker push
+          ${{env.REGISTRY_HOSTNAME}}/${{env.REGISTRY_NAMESPACE}}/${{env.IMAGE_NAME}}:${{env.TAG}}
+      - name: Deploy to Kubernetes
+        run: >
+          sed -e 's|image:.*|image:
+          ${{env.REGISTRY_HOSTNAME}}/${{env.REGISTRY_NAMESPACE}}/${{env.IMAGE_NAME}}:${{env.TAG}}|'
+          ./acam-artifacts/deploymentTemplate.yaml
+
+          kubectl apply -f ./acam-artifacts/ --namespace
+          ${{env.KUBERNETES_NAMESPACE}} --kubeconfig ./kubeconfig

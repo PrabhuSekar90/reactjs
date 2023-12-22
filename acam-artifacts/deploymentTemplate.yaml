@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: reactjs-sample
+    app.kubernetes.io/component: reactjs-sample
+  name: reactjs-sample
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reactjs-sample
+  template:
+    metadata:
+      labels:
+        app: reactjs-sample
+    spec:
+      containers:
+        - env: []
+          image: http://sasa.com/reactjs-sample
+          imagePullPolicy: Always
+          name: reactjs-sample
+          volumeMounts: null
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 50m
+              memory: 128Mi
+      imagePullSecrets:
+        - name: reactjs-sample-image-pull-secret
+      restartPolicy: Always
+      volumes: null
+      nodeSelector: null
